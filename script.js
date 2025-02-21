@@ -6,30 +6,40 @@ function predictHeartDisease() {
     let height = parseInt(document.getElementById("height").value);
     let weight = parseInt(document.getElementById("weight").value);
     let cholesterol = parseInt(document.getElementById("cholesterol").value);
-    let bp = parseInt(document.getElementById("bp").value);
+    let systolic = parseInt(document.getElementById("bp-systolic").value);
+    let diastolic = parseInt(document.getElementById("bp-diastolic").value);
     let heartRate = parseInt(document.getElementById("heartRate").value);
     let isSmoker = document.getElementById("smoking").checked ? 1 : 0;
     let hasDiabetes = document.getElementById("diabetes").checked ? 1 : 0;
     let exercise = parseInt(document.getElementById("exercise").value);
 
-    if (!name || isNaN(age) || isNaN(height) || isNaN(weight) || isNaN(cholesterol) || isNaN(bp) || isNaN(heartRate)) {
-        alert("Please fill all fields correctly.");
+    if (!name || isNaN(age) || isNaN(height) || isNaN(weight) || isNaN(cholesterol) || isNaN(systolic) || isNaN(diastolic) || isNaN(heartRate)) {
+        alert("⚠️ Please fill all fields correctly.");
         return;
     }
 
     let bmi = (weight / ((height / 100) ** 2)).toFixed(1);
-    let probability = 1 / (1 + Math.exp(-0.05 * age - 0.02 * cholesterol - 0.04 * bp + 0.05 * bmi - 0.03 * heartRate - 0.1 * exercise + 0.2 * isSmoker + 0.3 * hasDiabetes + 5));
-    let riskLevel = probability * 100;
-    let prediction = probability > 0.5 ? "High Risk of Heart Disease" : "Low Risk of Heart Disease";
+    let bpAvg = (systolic + diastolic) / 2;
+
+    // Improved probability calculation to avoid unrealistic values
+    let probability = 1 / (1 + Math.exp(-(
+        0.04 * age + 0.02 * cholesterol + 0.03 * bpAvg + 0.05 * bmi - 
+        0.04 * heartRate - 0.08 * exercise + 0.25 * isSmoker + 0.35 * hasDiabetes - 3
+    )));
+
+    let riskLevel = (probability * 100).toFixed(1);
+    let prediction = probability > 0.5 ? "🔴 High Risk of Heart Disease" : "🟢 Low Risk of Heart Disease";
 
     document.getElementById("patient-name").innerText = name;
-    document.getElementById("result").innerText = `Risk: ${riskLevel.toFixed(1)}% - ${prediction}`;
-    document.getElementById("risk-bar").value = riskLevel;
+    document.getElementById("result").innerHTML = `<strong>Risk:</strong> ${riskLevel}% - ${prediction}`;
+    
+    let riskBar = document.getElementById("risk-bar");
+    riskBar.value = riskLevel;
 
-    let progressBar = document.getElementById("risk-bar");
-    progressBar.style.backgroundColor = riskLevel > 50 ? "red" : "green";
+    // Dynamic progress bar color
+    riskBar.style.backgroundColor = probability > 0.75 ? "red" : probability > 0.5 ? "orange" : "green";
 
-    saveHistory(name, riskLevel.toFixed(1), prediction);
+    saveHistory(name, riskLevel, prediction);
     renderChart(probability);
 }
 
@@ -45,23 +55,38 @@ function renderChart(probability) {
         data: {
             labels: ["Risk", "No Risk"],
             datasets: [{
-                data: [probability * 100, (1 - probability) * 100],
+                data: [probability * 100, 100 - (probability * 100)],
                 backgroundColor: ["#FF4C4C", "#4CAF50"],
-                borderWidth: 0
+                borderWidth: 1
             }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: "bottom"
+                }
+            }
         }
     });
 }
 
 function saveHistory(name, risk, prediction) {
     let history = JSON.parse(localStorage.getItem("heartRiskHistory")) || [];
-    history.push({ name, risk, prediction });
+    history.push({ name, risk, prediction, date: new Date().toLocaleString() });
     localStorage.setItem("heartRiskHistory", JSON.stringify(history));
 }
 
 function viewHistory() {
     let history = JSON.parse(localStorage.getItem("heartRiskHistory")) || [];
-    alert(history.map(h => `${h.name}: ${h.risk}% - ${h.prediction}`).join("\n"));
+    if (history.length === 0) {
+        alert("📌 No history records found.");
+        return;
+    }
+
+    let historyText = history.map(h => `${h.date} - ${h.name}: ${h.risk}% - ${h.prediction}`).join("\n\n");
+    alert(historyText);
 }
 
 function downloadReport() {
@@ -73,7 +98,8 @@ function downloadReport() {
     let height = document.getElementById("height").value;
     let weight = document.getElementById("weight").value;
     let cholesterol = document.getElementById("cholesterol").value;
-    let bp = document.getElementById("bp").value;
+    let systolic = document.getElementById("bp-systolic").value;
+    let diastolic = document.getElementById("bp-diastolic").value;
     let heartRate = document.getElementById("heartRate").value;
     let exercise = document.getElementById("exercise").options[document.getElementById("exercise").selectedIndex].text;
     let smoking = document.getElementById("smoking").checked ? "Yes" : "No";
@@ -82,25 +108,31 @@ function downloadReport() {
 
     doc.setFontSize(18);
     doc.text("Heart Disease Risk Report", 10, 10);
-
     doc.setFontSize(12);
-    doc.text(`Patient Name: ${name}`, 10, 20);
-    doc.text(`Age: ${age} years`, 10, 30);
-    doc.text(`Height: ${height} cm`, 10, 40);
-    doc.text(`Weight: ${weight} kg`, 10, 50);
-    doc.text(`Cholesterol: ${cholesterol} mg/dL`, 10, 60);
-    doc.text(`Blood Pressure: ${bp} mmHg`, 10, 70);
-    doc.text(`Resting Heart Rate: ${heartRate} bpm`, 10, 80);
-    doc.text(`Exercise Frequency: ${exercise}`, 10, 90);
-    doc.text(`Smoker: ${smoking}`, 10, 100);
-    doc.text(`Diabetic: ${diabetes}`, 10, 110);
+    
+    let data = [
+        `Patient Name: ${name}`,
+        `Age: ${age} years`,
+        `Height: ${height} cm`,
+        `Weight: ${weight} kg`,
+        `Cholesterol: ${cholesterol} mg/dL`,
+        `Blood Pressure: ${systolic}/${diastolic} mmHg`,
+        `Resting Heart Rate: ${heartRate} bpm`,
+        `Exercise Frequency: ${exercise}`,
+        `Smoker: ${smoking}`,
+        `Diabetic: ${diabetes}`,
+        "",
+        "Risk Assessment:",
+        riskResult,
+        "",
+        "Disclaimer: This tool provides a simplified risk assessment and is not a substitute for professional medical advice."
+    ];
 
-    doc.setFontSize(14);
-    doc.text("Risk Assessment:", 10, 130);
-    doc.text(riskResult, 10, 140);
-
-    doc.setFontSize(10);
-    doc.text("Disclaimer: This tool provides a simplified risk assessment and is not a substitute for professional medical advice.", 10, 160);
+    let y = 20;
+    data.forEach(line => {
+        doc.text(line, 10, y);
+        y += 10;
+    });
 
     doc.save(`${name}_HeartRiskReport.pdf`);
 }
