@@ -21,7 +21,6 @@ function predictHeartDisease() {
     let bmi = (weight / ((height / 100) ** 2)).toFixed(1);
     let bpAvg = (systolic + diastolic) / 2;
 
-    // Improved probability calculation to avoid unrealistic values
     let probability = 1 / (1 + Math.exp(-(
         0.04 * age + 0.02 * cholesterol + 0.03 * bpAvg + 0.05 * bmi - 
         0.04 * heartRate - 0.08 * exercise + 0.25 * isSmoker + 0.35 * hasDiabetes - 3
@@ -33,12 +32,6 @@ function predictHeartDisease() {
     document.getElementById("patient-name").innerText = name;
     document.getElementById("result").innerHTML = `<strong>Risk:</strong> ${riskLevel}% - ${prediction}`;
     
-    let riskBar = document.getElementById("risk-bar");
-    riskBar.value = riskLevel;
-
-    // Dynamic progress bar color
-    riskBar.style.backgroundColor = probability > 0.75 ? "red" : probability > 0.5 ? "orange" : "green";
-
     saveHistory(name, riskLevel, prediction);
     renderChart(probability);
 }
@@ -78,20 +71,9 @@ function saveHistory(name, risk, prediction) {
     localStorage.setItem("heartRiskHistory", JSON.stringify(history));
 }
 
-function viewHistory() {
-    let history = JSON.parse(localStorage.getItem("heartRiskHistory")) || [];
-    if (history.length === 0) {
-        alert("📌 No history records found.");
-        return;
-    }
-
-    let historyText = history.map(h => `${h.date} - ${h.name}: ${h.risk}% - ${h.prediction}`).join("\n\n");
-    alert(historyText);
-}
-
 function downloadReport() {
     const { jsPDF } = window.jspdf;
-    let doc = new jsPDF();
+    let doc = new jsPDF({ format: "a4" });
 
     let name = document.getElementById("name").value.trim();
     let age = document.getElementById("age").value;
@@ -107,7 +89,7 @@ function downloadReport() {
     let riskResult = document.getElementById("result").innerText;
 
     doc.setFontSize(18);
-    doc.text("Heart Disease Risk Report", 10, 10);
+    doc.text("Heart Disease Risk Report", 105, 20, null, null, "center");
     doc.setFontSize(12);
     
     let data = [
@@ -128,9 +110,9 @@ function downloadReport() {
         "Disclaimer: This tool provides a simplified risk assessment and is not a substitute for professional medical advice."
     ];
 
-    let y = 20;
+    let y = 30;
     data.forEach(line => {
-        doc.text(line, 10, y);
+        doc.text(line, 20, y);
         y += 10;
     });
 
