@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Heart Disease Risk Predictor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script> <!-- PDF Library -->
+    <link rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Heart Disease Risk Predictor</h1>
+        <p>Enter your health metrics to assess your risk.</p>
+
+        <div class="input-group">
+            <label for="name">Patient Name:</label>
+            <input type="text" id="name" placeholder="Enter Name" required>
+        </div>
+        <div class="input-group">
+            <label for="age">Age:</label>
+            <input type="number" id="age" placeholder="Enter Age" required>
+        </div>
+        <div class="input-group">
+            <label for="height">Height (cm):</label>
+            <input type="number" id="height" placeholder="Enter Height" required>
+        </div>
+        <div class="input-group">
+            <label for="weight">Weight (kg):</label>
+            <input type="number" id="weight" placeholder="Enter Weight" required>
+        </div>
+        <div class="input-group">
+            <label for="cholesterol">Cholesterol:</label>
+            <input type="number" id="cholesterol" placeholder="Enter Cholesterol Level" required>
+        </div>
+        <div class="input-group">
+            <label for="bp">Blood Pressure:</label>
+            <input type="number" id="bp" placeholder="Enter Blood Pressure" required>
+        </div>
+        <div class="input-group">
+            <label for="heartRate">Resting Heart Rate (bpm):</label>
+            <input type="number" id="heartRate" placeholder="Enter Heart Rate" required>
+        </div>
+
+        <div class="checkbox-group">
+            <label><input type="checkbox" id="smoking"> Smoker</label>
+            <label><input type="checkbox" id="diabetes"> Diabetic</label>
+        </div>
+
+        <div class="input-group">
+            <label for="exercise">Exercise Frequency:</label>
+            <select id="exercise">
+                <option value="0">Rarely</option>
+                <option value="1">1-2 Times a Week</option>
+                <option value="2">3-5 Times a Week</option>
+                <option value="3">Daily</option>
+            </select>
+        </div>
+
+        <button onclick="predictHeartDisease()">Predict</button>
+
+        <div id="result-container">
+            <h2>Prediction for <span id="patient-name"></span>:</h2>
+            <p id="result"></p>
+
+            <div class="risk-meter">
+                <label>Risk Level:</label>
+                <progress id="risk-bar" value="0" max="100"></progress>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="predictionChart"></canvas>
+        </div>
+
+        <button onclick="downloadReport()">Download Report (PDF)</button>
+        <button onclick="viewHistory()">View History</button>
+
+        <p class="disclaimer">Disclaimer: This tool provides a simplified risk assessment and should not be considered a substitute for professional medical advice. Consult with a doctor for accurate diagnosis and treatment.</p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
